@@ -5,166 +5,188 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>リテラシークイズ - モック（全部入り）</title>
   <style>
-    :root{
-      --bg:#0f0f10;
-      --board:#1e4b2a;
-      --chalk:#f2f2f2;
-      --wood:#b48a3a;
-      --accent:#ffd46a;
-      --danger:#ff6b6b;
-      --ok:#6bffb0;
-    }
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;}
-    body{
-      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-      background:radial-gradient(1000px 600px at 50% 20%, #1b1b1d, var(--bg));
-      color:var(--chalk);
-      padding:14px;
-    }
+  :root{
+    --bg:#0f0f10;
+    --board:#1e4b2a;
+    --chalk:#f2f2f2;
+    --wood:#b48a3a;
+    --accent:#ffd46a;
+    --danger:#ff6b6b;
+    --ok:#6bffb0;
 
-    /* phone frame（大きめ） */
-    .phone{
-      width:min(430px, 96vw);
-      aspect-ratio:390/844;
-      border:10px solid #2a2a2d;
-      border-radius:28px;
-      box-shadow:0 20px 60px rgba(0,0,0,.55);
-      overflow:hidden;
-      background:var(--board);
-      position:relative;
-    }
+    /* 追加：レイアウト基準 */
+    --maxw:340px;      /* 中身の最大幅（基準線） */
+    --padTop:28px;     /* header下の余白 */
+    --padBot:104px;    /* 下ナビ+木枠分の余白 */
+    --gap:16px;        /* 要素間隔 */
+  }
 
-    .wood{position:absolute; inset:auto 0 0 0; height:52px; background:var(--wood);}
-    .wood:before,.wood:after{
-      content:""; position:absolute; bottom:10px; width:18px; height:18px;
-      background:#8c6a2b; border-radius:3px;
-    }
-    .wood:before{left:50%; transform:translateX(-28px);}
-    .wood:after {left:50%; transform:translateX(10px);}
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(1000px 600px at 50% 20%, #1b1b1d, var(--bg));
+    color:var(--chalk);
+    padding:14px;
+  }
 
-    header{
-      height:52px; display:flex; align-items:center; justify-content:center;
-      font-weight:900; letter-spacing:.04em; opacity:.95;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      position:relative;
-    }
-    header button{
-      position:absolute; right:10px; top:10px;
-      width:34px; height:34px; border-radius:10px;
-      border:1px solid rgba(255,255,255,.2);
-      background:rgba(0,0,0,.18); color:var(--chalk);
-      cursor:pointer;
-    }
+  /* phone frame（大きめ） */
+  .phone{
+    width:min(430px, 96vw);
+    aspect-ratio:390/844;
+    border:10px solid #2a2a2d;
+    border-radius:28px;
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+    background:var(--board);
+    position:relative;
+  }
 
-    main{padding:22px 18px 84px;}
-    h1{margin:10px 0 18px; font-size:26px; text-align:center;}
-    h2{margin:6px 0 14px; font-size:18px; text-align:center; opacity:.95;}
-    .center{display:flex; flex-direction:column; gap:14px; align-items:center;}
+  .wood{position:absolute; inset:auto 0 0 0; height:52px; background:var(--wood);}
+  .wood:before,.wood:after{
+    content:""; position:absolute; bottom:10px; width:18px; height:18px;
+    background:#8c6a2b; border-radius:3px;
+  }
+  .wood:before{left:50%; transform:translateX(-28px);}
+  .wood:after {left:50%; transform:translateX(10px);}
 
-    .btn{
-      width:88%; padding:14px 16px; border-radius:14px; cursor:pointer;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.18); color:var(--chalk);
-      font-size:18px; font-weight:900;
-    }
-    .btn.primary{border-color:rgba(255,212,106,.55);}
-    .btn.small{font-size:15px; font-weight:800; padding:12px 14px;}
+  header{
+    height:52px; display:flex; align-items:center; justify-content:center;
+    font-weight:900; letter-spacing:.04em; opacity:.95;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    position:relative;
+  }
+  header button{
+    position:absolute; right:10px; top:10px;
+    width:34px; height:34px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.2);
+    background:rgba(0,0,0,.18); color:var(--chalk);
+    cursor:pointer;
+  }
 
-    .row{display:flex; gap:12px; width:88%;}
-    .row .btn{width:50%; font-size:16px; font-weight:900;}
+  /* ★ここが一番効く：全画面共通の余白を調整 */
+  main{ padding: var(--padTop) 18px var(--padBot); }
 
-    .nav{
-      position:absolute; left:0; right:0; bottom:52px;
-      display:flex; justify-content:space-around; padding:10px 12px;
-      border-top:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.12);
-    }
-    .nav button{
-      background:none; border:none; color:var(--chalk);
-      opacity:.9; font-weight:900; cursor:pointer;
-    }
+  /* タイトル周りの詰まり解消 */
+  h1{ margin: 18px 0 22px; font-size:26px; text-align:center; }
+  h2{ margin: 10px 0 18px; font-size:18px; text-align:center; opacity:.95; }
 
-    .card{
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.14);
-      border-radius:16px;
-      padding:16px;
-      line-height:1.75;
-      font-size:15px;
-      white-space:pre-wrap;
-    }
+  .center{ display:flex; flex-direction:column; gap:var(--gap); align-items:center; }
 
-    .choice{display:flex; gap:22px; justify-content:center; margin-top:18px;}
-    .circle,.cross{
-      width:72px; height:72px; border-radius:18px;
-      display:grid; place-items:center; cursor:pointer;
-      border:2px solid rgba(255,255,255,.35);
-      background:rgba(0,0,0,.16);
-      font-size:30px; font-weight:1000;
-      user-select:none;
-    }
-    .circle{border-color:rgba(255,212,106,.6);}
+  /* ★幅の基準線：ボタン/カード/リストを揃える */
+  .btn, .grid, .card, .list{
+    width:88%;
+    max-width:var(--maxw);
+    margin-left:auto;
+    margin-right:auto;
+  }
 
-    .muted{opacity:.82; font-weight:700;}
-    .screen{display:none;}
-    .screen.active{display:block;}
+  .btn{
+    padding:14px 16px; border-radius:16px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.16); color:var(--chalk);
+    font-size:18px; font-weight:900;
+  }
+  .btn.primary{ border-color:rgba(255,212,106,.55); }
+  .btn.small{ font-size:15px; font-weight:800; padding:12px 14px; border-radius:16px; }
 
-    .list{display:flex; flex-direction:column; gap:10px; width:100%;}
-    .item{
-      display:flex; justify-content:space-between; gap:10px;
-      padding:12px 14px;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:14px; background:rgba(0,0,0,.12);
-      font-size:14px;
-    }
+  /* rowの幅も基準線に合わせる */
+  .row{ display:flex; gap:12px; width:88%; max-width:var(--maxw); margin:0 auto; }
+  .row .btn{ width:50%; font-size:16px; font-weight:900; }
 
-    .bigScore{font-size:44px; font-weight:1000; text-align:center; margin:10px 0;}
-    .pill{
-      display:inline-block; padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.12);
-      font-size:12px; font-weight:900; opacity:.95;
-    }
+  /* 下ナビ：圧迫を少し弱める */
+  .nav{
+    position:absolute; left:0; right:0; bottom:52px;
+    display:flex; justify-content:space-around; padding:10px 12px;
+    border-top:1px solid rgba(255,255,255,.10);
+    background:rgba(0,0,0,.10);
+    backdrop-filter: blur(6px);
+  }
+  .nav button{
+    background:none; border:none; color:var(--chalk);
+    opacity:.9; font-weight:900; cursor:pointer;
+    padding:6px 8px;
+  }
 
-    /* ジャンルボタン */
-    .grid{
-      width:88%;
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-    .genreBtn{
-      text-align:left;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .genreLeft{display:flex; gap:10px; align-items:flex-start;}
-    .gIcon{
-      width:34px; height:34px; border-radius:12px;
-      display:grid; place-items:center;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.14);
-      font-size:18px;
-      flex:0 0 auto;
-    }
-    .genreName{font-size:16px; font-weight:1000;}
-    .genreDesc{font-size:12px; opacity:.85; margin-top:3px; font-weight:700;}
-    .rightArrow{opacity:.9; font-weight:1000;}
+  .card{
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(0,0,0,.12);
+    border-radius:18px;
+    padding:16px;
+    line-height:1.85;
+    font-size:15px;
+    white-space:pre-wrap;
+  }
 
-    /* フィードバック */
-    .judge{
-      font-size:28px; font-weight:1000; text-align:center;
-      margin:6px 0 12px;
-    }
-    .judge.ok{color:var(--ok);}
-    .judge.ng{color:var(--danger);}
-    .mini{
-      font-size:12px; opacity:.85; font-weight:800; text-align:center;
-      margin-top:10px;
-    }
-  </style>
+  /* ★Quizの並びを固定：カード→◯×→案内 */
+  .choice{ display:flex; gap:22px; justify-content:center; margin-top:24px; }
+  .circle,.cross{
+    width:80px; height:80px; border-radius:20px;
+    display:grid; place-items:center; cursor:pointer;
+    border:2px solid rgba(255,255,255,.30);
+    background:rgba(0,0,0,.14);
+    font-size:32px; font-weight:1000;
+    user-select:none;
+  }
+  .circle{ border-color:rgba(255,212,106,.6); }
+
+  .muted{ opacity:.82; font-weight:700; }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  .list{ display:flex; flex-direction:column; gap:10px; }
+  .item{
+    display:flex; justify-content:space-between; gap:10px;
+    padding:12px 14px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px; background:rgba(0,0,0,.10);
+    font-size:14px;
+  }
+
+  .bigScore{ font-size:44px; font-weight:1000; text-align:center; margin:12px 0; }
+
+  .pill{
+    display:inline-block; padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(0,0,0,.10);
+    font-size:12px; font-weight:900; opacity:.95;
+  }
+
+  /* ジャンルボタン */
+  .grid{ display:grid; grid-template-columns:1fr; gap:10px; }
+  .genreBtn{
+    text-align:left;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .genreLeft{ display:flex; gap:10px; align-items:center; } /* ★アイコンと文字を縦中央に */
+  .gIcon{
+    width:34px; height:34px; border-radius:12px;
+    display:grid; place-items:center;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.12);
+    font-size:18px;
+    flex:0 0 auto;
+  }
+  .genreName{ font-size:16px; font-weight:1000; }
+  .genreDesc{ font-size:12px; opacity:.85; margin-top:3px; font-weight:700; }
+  .rightArrow{ opacity:.9; font-weight:1000; }
+
+  /* フィードバック */
+  .judge{
+    font-size:28px; font-weight:1000; text-align:center;
+    margin:8px 0 12px;
+  }
+  .judge.ok{ color:var(--ok); }
+  .judge.ng{ color:var(--danger); }
+  .mini{
+    font-size:12px; opacity:.85; font-weight:800; text-align:center;
+    margin-top:12px;
+  }
+</style>
+
 </head>
 <body>
   <div class="phone" id="phone">
