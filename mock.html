@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>リテラシークイズ - モック（ジャンル対応）</title>
+  <style>
+    :root{
+      --bg:#0f0f10;
+      --board:#1e4b2a;
+      --chalk:#f2f2f2;
+      --wood:#b48a3a;
+      --accent:#ffd46a;
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;}
+    body{
+      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:radial-gradient(1000px 600px at 50% 20%, #1b1b1d, var(--bg));
+      color:var(--chalk);
+      padding:14px;
+    }
+
+    /* phone frame（少し大きく） */
+    .phone{
+      width:min(430px, 96vw);            /* ★ 390→430 */
+      aspect-ratio:390/844;
+      border:10px solid #2a2a2d;
+      border-radius:28px;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      background:var(--board);
+      position:relative;
+    }
+
+    .wood{position:absolute; inset:auto 0 0 0; height:52px; background:var(--wood);}
+    .wood:before,.wood:after{
+      content:""; position:absolute; bottom:10px; width:18px; height:18px;
+      background:#8c6a2b; border-radius:3px;
+    }
+    .wood:before{left:50%; transform:translateX(-28px);}
+    .wood:after {left:50%; transform:translateX(10px);}
+
+    header{
+      height:52px; display:flex; align-items:center; justify-content:center;
+      font-weight:800; letter-spacing:.04em; opacity:.95;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      position:relative;
+    }
+    header button{
+      position:absolute; right:10px; top:10px;
+      width:34px; height:34px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.2);
+      background:rgba(0,0,0,.18); color:var(--chalk);
+      cursor:pointer;
+    }
+
+    main{padding:22px 18px 84px;}
+    h1{margin:10px 0 18px; font-size:26px; text-align:center;}
+    h2{margin:6px 0 14px; font-size:18px; text-align:center; opacity:.95;}
+    .center{display:flex; flex-direction:column; gap:14px; align-items:center;}
+
+    .btn{
+      width:88%; padding:14px 16px; border-radius:14px; cursor:pointer;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.18); color:var(--chalk);
+      font-size:18px; font-weight:800;
+    }
+    .btn.primary{border-color:rgba(255,212,106,.55);}
+    .btn.small{font-size:15px; font-weight:700; padding:12px 14px;}
+
+    .row{display:flex; gap:12px; width:88%;}
+    .row .btn{width:50%; font-size:16px; font-weight:800;}
+
+    .nav{
+      position:absolute; left:0; right:0; bottom:52px;
+      display:flex; justify-content:space-around; padding:10px 12px;
+      border-top:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.12);
+    }
+    .nav button{
+      background:none; border:none; color:var(--chalk);
+      opacity:.9; font-weight:800; cursor:pointer;
+    }
+
+    .card{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.14);
+      border-radius:16px;
+      padding:16px;
+      line-height:1.7;
+      font-size:15px;
+      white-space:pre-wrap;
+    }
+
+    .choice{display:flex; gap:22px; justify-content:center; margin-top:18px;}
+    .circle,.cross{
+      width:72px; height:72px; border-radius:18px;
+      display:grid; place-items:center; cursor:pointer;
+      border:2px solid rgba(255,255,255,.35);
+      background:rgba(0,0,0,.16);
+      font-size:30px; font-weight:1000;
+      user-select:none;
+    }
+    .circle{border-color:rgba(255,212,106,.6);}
+    .muted{opacity:.82; font-weight:650;}
+    .screen{display:none;}
+    .screen.active{display:block;}
+
+    .list{display:flex; flex-direction:column; gap:10px; width:100%;}
+    .item{
+      display:flex; justify-content:space-between; gap:10px;
+      padding:12px 14px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px; background:rgba(0,0,0,.12);
+      font-size:14px;
+    }
+
+    .bigScore{font-size:44px; font-weight:1000; text-align:center; margin:10px 0;}
+    .pill{
+      display:inline-block; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.12);
+      font-size:12px; font-weight:800; opacity:.95;
+    }
+
+    /* ジャンルボタン */
+    .grid{
+      width:88%;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    .genreBtn{
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .genreName{font-size:16px; font-weight:900;}
+    .genreDesc{font-size:12px; opacity:.85; margin-top:3px; font-weight:650;}
+    .rightArrow{opacity:.9; font-weight:1000;}
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <header>
+      <span id="title">Home</span>
+      <button id="homeBtn" title="Home" onclick="go('home')">⌂</button>
+    </header>
+
+    <!-- HOME -->
+    <section class="screen active" id="home">
+      <main>
+        <h1>リテラシークイズ</h1>
+        <div class="center">
+          <button class="btn primary" onclick="go('genre')">スタート</button>
+          <div class="row">
+            <button class="btn" onclick="go('history')">履歴</button>
+            <button class="btn" onclick="go('setting')">設定</button>
+          </div>
+          <p class="muted">※モック：ジャンル選択→5問→結果</p>
+        </div>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <!-- GENRE SELECT -->
+    <section class="screen" id="genre">
+      <main>
+        <h2>ジャンルを選択</h2>
+        <div class="grid" id="genreList"></div>
+        <div class="center" style="margin-top:14px;">
+          <button class="btn small" onclick="go('home')">戻る</button>
+        </div>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="screen" id="quiz">
+      <main>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="pill" id="genrePill">ジャンル</span>
+          <span class="pill" id="progressPill">1/5</span>
+        </div>
+
+        <div class="card" id="qText"></div>
+
+        <div class="choice">
+          <div class="circle" onclick="answer(true)">○</div>
+          <div class="cross" onclick="answer(false)">×</div>
+        </div>
+
+        <p class="muted" style="text-align:center;margin-top:14px;">
+          「正しいと思う方」を選ぶ
+        </p>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <!-- RESULT -->
+    <section class="screen" id="result">
+      <main>
+        <div class="bigScore" id="scoreLine">スコア 0/5</div>
+        <div class="card">
+          <div>ジャンル：<b id="resGenre">-</b></div>
+          <div style="margin-top:10px;">正解：<b id="ok">0</b></div>
+          <div>不正解：<b id="ng">0</b></div>
+        </div>
+        <div class="center" style="margin-top:18px;">
+          <button class="btn" onclick="go('home')">ホームに戻る</button>
+          <button class="btn" onclick="go('genre')">別ジャンルを選ぶ</button>
+          <button class="btn" onclick="restart()">同じジャンルでもう一度</button>
+        </div>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="screen" id="history">
+      <main>
+        <h1 style="font-size:22px;">履歴</h1>
+        <div class="list" id="histList"></div>
+        <div class="center" style="margin-top:14px;">
+          <button class="btn small" onclick="clearHist()">履歴を消す</button>
+        </div>
+        <p class="muted" style="margin-top:12px;">※ローカル保存（モック）</p>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <!-- SETTING -->
+    <section class="screen" id="setting">
+      <main>
+        <h1 style="font-size:22px;">setting</h1>
+        <div class="list">
+          <div class="item"><span class="muted">BGM</span><span>100%</span></div>
+          <div class="item"><span class="muted">SE</span><span>100%</span></div>
+          <div class="item"><span class="muted">文字サイズ</span><span>中</span></div>
+          <div class="item"><span class="muted">テーマ</span><span>ダーク</span></div>
+        </div>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <div class="nav">
+      <button onclick="go('home')">Home</button>
+      <button onclick="go('history')">履歴</button>
+      <button onclick="go('setting')">設定</button>
+    </div>
+  </div>
+
+<script>
+  // 5ジャンル × 各5問（○=true / ×=false）
+  const bank = {
+    "フェイクニュース": [
+      { text:"1) 『公式が発表』と書いてあっても、出典リンクや発信元を確認するのが望ましい。", ans:true },
+      { text:"2) 拡散数が多い投稿ほど正しい可能性が高いので、確認は不要だ。", ans:false },
+      { text:"3) 画像付きでも、切り取り・加工の可能性があるため注意が必要だ。", ans:true },
+      { text:"4) タイトルだけで判断しても、内容はだいたい同じなので問題ない。", ans:false },
+      { text:"5) 複数の信頼できる媒体で同じ内容が確認できると信頼性が上がる。", ans:true },
+    ],
+    "SNSマナー": [
+      { text:"1) 友達の写真を載せる前に、本人の同意を取るのが望ましい。", ans:true },
+      { text:"2) DMの内容は個人間のものなので、スクショして公開しても問題ない。", ans:false },
+      { text:"3) 強い言葉で返信する前に、一度落ち着いて見直すのが安全だ。", ans:true },
+      { text:"4) 炎上している話題には、冗談でも便乗コメントしてよい。", ans:false },
+      { text:"5) 投稿は将来見られる可能性があるため、残る前提で書くべきだ。", ans:true },
+    ],
+    "ネット詐欺": [
+      { text:"1) 『至急』『当選』『未払い』など不安を煽る文面は詐欺の可能性がある。", ans:true },
+      { text:"2) 知らない番号からのSMSでも、リンク先がそれっぽければ開いてよい。", ans:false },
+      { text:"3) 公式を名乗るメールでも、送信元ドメインやURLを確認するのが大切。", ans:true },
+      { text:"4) パスワードの再設定は、メールのリンクから直接入るのが最も安全だ。", ans:false },
+      { text:"5) 少しでも怪しいと感じたら、公式サイト/公式アプリから確認する。", ans:true },
+    ],
+    "個人情報": [
+      { text:"1) 住所が特定される情報（学校名・最寄り・背景の看板など）に注意する。", ans:true },
+      { text:"2) 位置情報の自動付与は便利なので、基本ONのままで問題ない。", ans:false },
+      { text:"3) 誕生日＋電話番号などは、組み合わせると本人特定に繋がりやすい。", ans:true },
+      { text:"4) 公開アカウントでも、友達だけが見る前提で投稿してよい。", ans:false },
+      { text:"5) アプリの権限（位置情報/連絡先など）は必要最小限にするのが安全。", ans:true },
+    ],
+    "パスワード": [
+      { text:"1) 同じパスワードの使い回しは、流出時の被害が大きくなる。", ans:true },
+      { text:"2) 誕生日や名前は覚えやすいので、強いパスワードとして十分だ。", ans:false },
+      { text:"3) 長くて複雑なパスワードほど推測されにくい。", ans:true },
+      { text:"4) パスワードは定期的に短く変更すると安全性が上がる。", ans:false },
+      { text:"5) 二段階認証を使うと、不正ログインのリスクが下がる。", ans:true },
+    ],
+  };
+
+  const GENRES = Object.keys(bank);
+
+  // 状態
+  let currentGenre = null;
+  let questions = [];
+  let idx = 0, ok = 0, ng = 0;
+
+  // 履歴
+  const HIST_KEY = "lit_hist_v2";
+  function loadHist(){ return JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); }
+  function saveHist(list){ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 30))); }
+
+  // 画面遷移
+  function go(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+
+    document.getElementById("title").textContent =
+      id==="home" ? "Home" :
+      id==="genre" ? "Genre" :
+      id==="quiz" ? "Quiz" :
+      id==="result" ? "Result" :
+      id==="history" ? "履歴" : "設定";
+
+    if(id==="genre") renderGenres();
+    if(id==="history") renderHist();
+  }
+
+  // ジャンル一覧を描画
+  function renderGenres(){
+    const el = document.getElementById("genreList");
+    el.innerHTML = "";
+    const desc = {
+      "フェイクニュース":"出典・拡散・画像の見極め",
+      "SNSマナー":"投稿・返信・同意の基本",
+      "ネット詐欺":"SMS/メール/偽サイト対策",
+      "個人情報":"特定される情報と権限",
+      "パスワード":"使い回し・強度・二段階認証",
+    };
+    GENRES.forEach(g=>{
+      const btn = document.createElement("button");
+      btn.className = "btn small genreBtn";
+      btn.onclick = () => startGenre(g);
+      btn.innerHTML = `
+        <div>
+          <div class="genreName">${g}</div>
+          <div class="genreDesc">${desc[g] || ""}</div>
+        </div>
+        <div class="rightArrow">▶</div>
+      `;
+      el.appendChild(btn);
+    });
+  }
+
+  // ジャンル開始
+  function startGenre(g){
+    currentGenre = g;
+    // シャッフルしたい場合はここで混ぜてもOK（今回は固定でOK）
+    questions = bank[g].slice(0, 5);
+    idx = 0; ok = 0; ng = 0;
+
+    document.getElementById("genrePill").textContent = currentGenre;
+    document.getElementById("progressPill").textContent = `${idx+1}/${questions.length}`;
+    document.getElementById("qText").textContent = questions[idx].text;
+
+    go("quiz");
+  }
+
+  // 回答
+  function answer(choice){
+    const correct = questions[idx].ans === choice;
+    correct ? ok++ : ng++;
+
+    idx++;
+
+    if(idx >= questions.length){
+      // 履歴保存
+      const list = loadHist();
+      list.unshift({
+        date: new Date().toLocaleString(),
+        genre: currentGenre,
+        ok,
+        total: questions.length
+      });
+      saveHist(list);
+
+      // 結果表示
+      document.getElementById("scoreLine").textContent = `スコア ${ok}/${questions.length}`;
+      document.getElementById("resGenre").textContent = currentGenre;
+      document.getElementById("ok").textContent = ok;
+      document.getElementById("ng").textContent = ng;
+      go("result");
+      return;
+    }
+
+    document.getElementById("progressPill").textContent = `${idx+1}/${questions.length}`;
+    document.getElementById("qText").textContent = questions[idx].text;
+  }
+
+  function restart(){
+    if(!currentGenre){ go("genre"); return; }
+    startGenre(currentGenre);
+  }
+
+  // 履歴描画
+  function renderHist(){
+    const el = document.getElementById("histList");
+    el.innerHTML = "";
+    const list = loadHist();
+    if(list.length === 0){
+      el.innerHTML = `<div class="card">まだ履歴がありません</div>`;
+      return;
+    }
+    list.forEach(r=>{
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `<span>${r.date}（${r.genre}）</span><span>${r.ok}/${r.total}</span>`;
+      el.appendChild(div);
+    });
+  }
+
+  function clearHist(){
+    localStorage.removeItem(HIST_KEY);
+    renderHist();
+  }
+
+  // 初期化
+  renderGenres();
+</script>
+</body>
+</html>
