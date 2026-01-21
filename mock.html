@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>リテラシークイズ - モック（ジャンル対応）</title>
+  <title>リテラシークイズ - モック（全部入り）</title>
   <style>
     :root{
       --bg:#0f0f10;
@@ -11,6 +11,8 @@
       --chalk:#f2f2f2;
       --wood:#b48a3a;
       --accent:#ffd46a;
+      --danger:#ff6b6b;
+      --ok:#6bffb0;
     }
     *{box-sizing:border-box;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;}
     body{
@@ -20,9 +22,9 @@
       padding:14px;
     }
 
-    /* phone frame（少し大きく） */
+    /* phone frame（大きめ） */
     .phone{
-      width:min(430px, 96vw);            /* ★ 390→430 */
+      width:min(430px, 96vw);
       aspect-ratio:390/844;
       border:10px solid #2a2a2d;
       border-radius:28px;
@@ -42,7 +44,7 @@
 
     header{
       height:52px; display:flex; align-items:center; justify-content:center;
-      font-weight:800; letter-spacing:.04em; opacity:.95;
+      font-weight:900; letter-spacing:.04em; opacity:.95;
       border-bottom:1px solid rgba(255,255,255,.10);
       position:relative;
     }
@@ -63,13 +65,13 @@
       width:88%; padding:14px 16px; border-radius:14px; cursor:pointer;
       border:1px solid rgba(255,255,255,.18);
       background:rgba(0,0,0,.18); color:var(--chalk);
-      font-size:18px; font-weight:800;
+      font-size:18px; font-weight:900;
     }
     .btn.primary{border-color:rgba(255,212,106,.55);}
-    .btn.small{font-size:15px; font-weight:700; padding:12px 14px;}
+    .btn.small{font-size:15px; font-weight:800; padding:12px 14px;}
 
     .row{display:flex; gap:12px; width:88%;}
-    .row .btn{width:50%; font-size:16px; font-weight:800;}
+    .row .btn{width:50%; font-size:16px; font-weight:900;}
 
     .nav{
       position:absolute; left:0; right:0; bottom:52px;
@@ -79,7 +81,7 @@
     }
     .nav button{
       background:none; border:none; color:var(--chalk);
-      opacity:.9; font-weight:800; cursor:pointer;
+      opacity:.9; font-weight:900; cursor:pointer;
     }
 
     .card{
@@ -87,7 +89,7 @@
       background:rgba(0,0,0,.14);
       border-radius:16px;
       padding:16px;
-      line-height:1.7;
+      line-height:1.75;
       font-size:15px;
       white-space:pre-wrap;
     }
@@ -102,7 +104,8 @@
       user-select:none;
     }
     .circle{border-color:rgba(255,212,106,.6);}
-    .muted{opacity:.82; font-weight:650;}
+
+    .muted{opacity:.82; font-weight:700;}
     .screen{display:none;}
     .screen.active{display:block;}
 
@@ -120,7 +123,7 @@
       display:inline-block; padding:6px 10px; border-radius:999px;
       border:1px solid rgba(255,255,255,.16);
       background:rgba(0,0,0,.12);
-      font-size:12px; font-weight:800; opacity:.95;
+      font-size:12px; font-weight:900; opacity:.95;
     }
 
     /* ジャンルボタン */
@@ -135,11 +138,32 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
+      gap:12px;
     }
-    .genreName{font-size:16px; font-weight:900;}
-    .genreDesc{font-size:12px; opacity:.85; margin-top:3px; font-weight:650;}
+    .genreLeft{display:flex; gap:10px; align-items:flex-start;}
+    .gIcon{
+      width:34px; height:34px; border-radius:12px;
+      display:grid; place-items:center;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.14);
+      font-size:18px;
+      flex:0 0 auto;
+    }
+    .genreName{font-size:16px; font-weight:1000;}
+    .genreDesc{font-size:12px; opacity:.85; margin-top:3px; font-weight:700;}
     .rightArrow{opacity:.9; font-weight:1000;}
+
+    /* フィードバック */
+    .judge{
+      font-size:28px; font-weight:1000; text-align:center;
+      margin:6px 0 12px;
+    }
+    .judge.ok{color:var(--ok);}
+    .judge.ng{color:var(--danger);}
+    .mini{
+      font-size:12px; opacity:.85; font-weight:800; text-align:center;
+      margin-top:10px;
+    }
   </style>
 </head>
 <body>
@@ -159,7 +183,7 @@
             <button class="btn" onclick="go('history')">履歴</button>
             <button class="btn" onclick="go('setting')">設定</button>
           </div>
-          <p class="muted">※モック：ジャンル選択→5問→結果</p>
+          <p class="muted">※モック：ジャンル→5問→解説→結果</p>
         </div>
       </main>
       <div class="wood"></div>
@@ -195,6 +219,28 @@
         <p class="muted" style="text-align:center;margin-top:14px;">
           「正しいと思う方」を選ぶ
         </p>
+      </main>
+      <div class="wood"></div>
+    </section>
+
+    <!-- FEEDBACK（毎問の正誤解説） -->
+    <section class="screen" id="feedback">
+      <main>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="pill" id="fbGenre">ジャンル</span>
+          <span class="pill" id="fbProgress">1/5</span>
+        </div>
+
+        <div class="judge" id="judgeText">正解！</div>
+
+        <div class="card" id="expText"></div>
+
+        <div class="center" style="margin-top:16px;">
+          <button class="btn primary" id="nextBtn" onclick="nextFromFeedback()">次へ</button>
+          <button class="btn" onclick="go('home')">ホームに戻る</button>
+        </div>
+
+        <div class="mini">※解説は「なぜそう判断するか」を短くまとめています</div>
       </main>
       <div class="wood"></div>
     </section>
@@ -252,54 +298,90 @@
   </div>
 
 <script>
-  // 5ジャンル × 各5問（○=true / ×=false）
+  // 5ジャンル × 各5問（text/ans/exp）
   const bank = {
     "フェイクニュース": [
-      { text:"1) 『公式が発表』と書いてあっても、出典リンクや発信元を確認するのが望ましい。", ans:true },
-      { text:"2) 拡散数が多い投稿ほど正しい可能性が高いので、確認は不要だ。", ans:false },
-      { text:"3) 画像付きでも、切り取り・加工の可能性があるため注意が必要だ。", ans:true },
-      { text:"4) タイトルだけで判断しても、内容はだいたい同じなので問題ない。", ans:false },
-      { text:"5) 複数の信頼できる媒体で同じ内容が確認できると信頼性が上がる。", ans:true },
+      { text:"1) 『公式が発表』と書いてあっても、出典や発信元を確認するのが望ましい。", ans:true,
+        exp:"理由：『公式』という言葉だけでは根拠になりません。発信元（公式サイト・公式SNS・報道機関）を確認して裏取りするのが基本です。" },
+      { text:"2) 拡散数が多い投稿ほど正しい可能性が高いので、確認は不要だ。", ans:false,
+        exp:"理由：拡散は『正しさ』ではなく『感情を動かす強さ』で起きやすいです。根拠や出典を確認する必要があります。" },
+      { text:"3) 画像付きでも、切り取り・加工の可能性があるため注意が必要だ。", ans:true,
+        exp:"理由：画像は編集や文脈の切り取りができます。元画像・元記事・撮影日時などの確認が有効です。" },
+      { text:"4) タイトルだけで判断しても、内容はだいたい同じなので問題ない。", ans:false,
+        exp:"理由：タイトルは誤解を生む表現もあります。本文の条件・数字・前提が違うことが多いです。" },
+      { text:"5) 複数の信頼できる媒体で同じ内容が確認できると信頼性が上がる。", ans:true,
+        exp:"理由：独自情報は誤りもありえます。複数の信頼できる情報源で一致すると信頼性が高まります。" },
     ],
     "SNSマナー": [
-      { text:"1) 友達の写真を載せる前に、本人の同意を取るのが望ましい。", ans:true },
-      { text:"2) DMの内容は個人間のものなので、スクショして公開しても問題ない。", ans:false },
-      { text:"3) 強い言葉で返信する前に、一度落ち着いて見直すのが安全だ。", ans:true },
-      { text:"4) 炎上している話題には、冗談でも便乗コメントしてよい。", ans:false },
-      { text:"5) 投稿は将来見られる可能性があるため、残る前提で書くべきだ。", ans:true },
+      { text:"1) 友達の写真を載せる前に、本人の同意を取るのが望ましい。", ans:true,
+        exp:"理由：肖像権・プライバシーの問題があります。許可を取るのが安全でトラブルも防げます。" },
+      { text:"2) DMの内容は個人間のものなので、スクショして公開しても問題ない。", ans:false,
+        exp:"理由：DMもプライバシー情報です。公開は信頼を壊し、トラブルや名誉毀損につながる可能性があります。" },
+      { text:"3) 強い言葉で返信する前に、一度落ち着いて見直すのが安全だ。", ans:true,
+        exp:"理由：感情的な投稿は炎上・誤解を招きやすいです。時間を置いて見直すのが有効です。" },
+      { text:"4) 炎上している話題には、冗談でも便乗コメントしてよい。", ans:false,
+        exp:"理由：冗談でも切り取られて拡散されることがあります。誤解されやすい場では慎重が必要です。" },
+      { text:"5) 投稿は将来見られる可能性があるため、残る前提で書くべきだ。", ans:true,
+        exp:"理由：スクショ・転載・検索で残ることがあります。『将来の自分が見ても大丈夫か』で判断します。" },
     ],
     "ネット詐欺": [
-      { text:"1) 『至急』『当選』『未払い』など不安を煽る文面は詐欺の可能性がある。", ans:true },
-      { text:"2) 知らない番号からのSMSでも、リンク先がそれっぽければ開いてよい。", ans:false },
-      { text:"3) 公式を名乗るメールでも、送信元ドメインやURLを確認するのが大切。", ans:true },
-      { text:"4) パスワードの再設定は、メールのリンクから直接入るのが最も安全だ。", ans:false },
-      { text:"5) 少しでも怪しいと感じたら、公式サイト/公式アプリから確認する。", ans:true },
+      { text:"1) 『至急』『当選』『未払い』など不安を煽る文面は詐欺の可能性がある。", ans:true,
+        exp:"理由：焦らせて判断力を下げるのは典型的手口です。まず落ち着いて公式経路で確認します。" },
+      { text:"2) 知らない番号からのSMSでも、リンク先がそれっぽければ開いてよい。", ans:false,
+        exp:"理由：偽サイトに誘導される危険があります。SMSのリンクは開かず公式サイト/公式アプリから確認します。" },
+      { text:"3) 公式を名乗るメールでも、送信元ドメインやURLを確認するのが大切。", ans:true,
+        exp:"理由：差出人名は偽装できます。ドメインやURL（綴り）を確認し、怪しければ開かないのが基本です。" },
+      { text:"4) パスワード再設定は、メールのリンクから直接入るのが最も安全だ。", ans:false,
+        exp:"理由：偽リンクの可能性があります。ブックマークや公式アプリからログインして再設定する方が安全です。" },
+      { text:"5) 少しでも怪しいと感じたら、公式サイト/公式アプリから確認する。", ans:true,
+        exp:"理由：怪しい連絡は『公式経路で再確認』が鉄則です。被害の多くはリンクを踏むことから始まります。" },
     ],
     "個人情報": [
-      { text:"1) 住所が特定される情報（学校名・最寄り・背景の看板など）に注意する。", ans:true },
-      { text:"2) 位置情報の自動付与は便利なので、基本ONのままで問題ない。", ans:false },
-      { text:"3) 誕生日＋電話番号などは、組み合わせると本人特定に繋がりやすい。", ans:true },
-      { text:"4) 公開アカウントでも、友達だけが見る前提で投稿してよい。", ans:false },
-      { text:"5) アプリの権限（位置情報/連絡先など）は必要最小限にするのが安全。", ans:true },
+      { text:"1) 住所が特定される情報（学校名・最寄り・背景の看板など）に注意する。", ans:true,
+        exp:"理由：断片情報の組み合わせで特定されます。背景や制服、通学ルートの映り込みにも注意します。" },
+      { text:"2) 位置情報の自動付与は便利なので、基本ONのままで問題ない。", ans:false,
+        exp:"理由：自宅や行動範囲が特定される危険があります。必要な時だけONにするのが安全です。" },
+      { text:"3) 誕生日＋電話番号などは、組み合わせると本人特定に繋がりやすい。", ans:true,
+        exp:"理由：複数の情報が揃うと本人確認に使われやすいです。公開範囲や投稿内容に注意します。" },
+      { text:"4) 公開アカウントでも、友達だけが見る前提で投稿してよい。", ans:false,
+        exp:"理由：公開＝誰でも見られます。拡散・保存される前提で投稿するのが安全です。" },
+      { text:"5) アプリの権限（位置情報/連絡先など）は必要最小限にするのが安全。", ans:true,
+        exp:"理由：不要な権限はリスクになります。目的に必要な権限だけ許可するのが基本です。" },
     ],
     "パスワード": [
-      { text:"1) 同じパスワードの使い回しは、流出時の被害が大きくなる。", ans:true },
-      { text:"2) 誕生日や名前は覚えやすいので、強いパスワードとして十分だ。", ans:false },
-      { text:"3) 長くて複雑なパスワードほど推測されにくい。", ans:true },
-      { text:"4) パスワードは定期的に短く変更すると安全性が上がる。", ans:false },
-      { text:"5) 二段階認証を使うと、不正ログインのリスクが下がる。", ans:true },
+      { text:"1) 同じパスワードの使い回しは、流出時の被害が大きくなる。", ans:true,
+        exp:"理由：1つ漏れると他サービスも連鎖的に侵害されます。サービスごとに別パスが安全です。" },
+      { text:"2) 誕生日や名前は覚えやすいので、強いパスワードとして十分だ。", ans:false,
+        exp:"理由：推測されやすい情報です。長くてランダムな文字列（フレーズ型でもOK）が強いです。" },
+      { text:"3) 長くて複雑なパスワードほど推測されにくい。", ans:true,
+        exp:"理由：長さは強度に直結します。可能ならパスワード管理ツール＋長いパスで運用します。" },
+      { text:"4) パスワードは定期的に短く変更すると安全性が上がる。", ans:false,
+        exp:"理由：短くすると弱くなります。『漏れた可能性がある時に変更』＋『長く強く』が基本です。" },
+      { text:"5) 二段階認証を使うと、不正ログインのリスクが下がる。", ans:true,
+        exp:"理由：パスワードが漏れても追加認証で止められます。可能なサービスはONが推奨です。" },
     ],
   };
 
-  const GENRES = Object.keys(bank);
+  const meta = [
+    { name:"フェイクニュース", icon:"📰", desc:"出典・拡散・画像の見極め" },
+    { name:"SNSマナー",       icon:"💬", desc:"投稿・返信・同意の基本" },
+    { name:"ネット詐欺",       icon:"⚠️", desc:"SMS/メール/偽サイト対策" },
+    { name:"個人情報",         icon:"🔒", desc:"特定される情報と権限" },
+    { name:"パスワード",       icon:"🔑", desc:"使い回し・強度・二段階認証" },
+  ];
 
   // 状態
   let currentGenre = null;
   let questions = [];
   let idx = 0, ok = 0, ng = 0;
 
+  // フィードバック用
+  let lastWasCorrect = false;
+  let lastExp = "";
+  let lastProgressText = "";
+
   // 履歴
-  const HIST_KEY = "lit_hist_v2";
+  const HIST_KEY = "lit_hist_v3";
   function loadHist(){ return JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); }
   function saveHist(list){ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 30))); }
 
@@ -312,6 +394,7 @@
       id==="home" ? "Home" :
       id==="genre" ? "Genre" :
       id==="quiz" ? "Quiz" :
+      id==="feedback" ? "Explain" :
       id==="result" ? "Result" :
       id==="history" ? "履歴" : "設定";
 
@@ -319,25 +402,21 @@
     if(id==="history") renderHist();
   }
 
-  // ジャンル一覧を描画
+  // ジャンル一覧
   function renderGenres(){
     const el = document.getElementById("genreList");
     el.innerHTML = "";
-    const desc = {
-      "フェイクニュース":"出典・拡散・画像の見極め",
-      "SNSマナー":"投稿・返信・同意の基本",
-      "ネット詐欺":"SMS/メール/偽サイト対策",
-      "個人情報":"特定される情報と権限",
-      "パスワード":"使い回し・強度・二段階認証",
-    };
-    GENRES.forEach(g=>{
+    meta.forEach(m=>{
       const btn = document.createElement("button");
       btn.className = "btn small genreBtn";
-      btn.onclick = () => startGenre(g);
+      btn.onclick = () => startGenre(m.name);
       btn.innerHTML = `
-        <div>
-          <div class="genreName">${g}</div>
-          <div class="genreDesc">${desc[g] || ""}</div>
+        <div class="genreLeft">
+          <div class="gIcon">${m.icon}</div>
+          <div>
+            <div class="genreName">${m.name}</div>
+            <div class="genreDesc">${m.desc}</div>
+          </div>
         </div>
         <div class="rightArrow">▶</div>
       `;
@@ -348,24 +427,48 @@
   // ジャンル開始
   function startGenre(g){
     currentGenre = g;
-    // シャッフルしたい場合はここで混ぜてもOK（今回は固定でOK）
     questions = bank[g].slice(0, 5);
     idx = 0; ok = 0; ng = 0;
 
-    document.getElementById("genrePill").textContent = currentGenre;
-    document.getElementById("progressPill").textContent = `${idx+1}/${questions.length}`;
-    document.getElementById("qText").textContent = questions[idx].text;
-
+    updateQuizUI();
     go("quiz");
   }
 
-  // 回答
+  function updateQuizUI(){
+    document.getElementById("genrePill").textContent = currentGenre;
+    document.getElementById("progressPill").textContent = `${idx+1}/${questions.length}`;
+    document.getElementById("qText").textContent = questions[idx].text;
+  }
+
+  // 回答 → フィードバックへ
   function answer(choice){
-    const correct = questions[idx].ans === choice;
-    correct ? ok++ : ng++;
+    const q = questions[idx];
+    lastWasCorrect = (q.ans === choice);
+    lastExp = q.exp;
+    lastProgressText = `${idx+1}/${questions.length}`;
 
+    if(lastWasCorrect) ok++; else ng++;
+
+    // フィードバック表示
+    document.getElementById("fbGenre").textContent = currentGenre;
+    document.getElementById("fbProgress").textContent = lastProgressText;
+
+    const jt = document.getElementById("judgeText");
+    jt.textContent = lastWasCorrect ? "正解！" : "不正解";
+    jt.className = "judge " + (lastWasCorrect ? "ok" : "ng");
+
+    document.getElementById("expText").textContent = lastExp;
+
+    // 次ボタン文言
+    const isLast = (idx === questions.length - 1);
+    document.getElementById("nextBtn").textContent = isLast ? "結果へ" : "次の問題へ";
+
+    go("feedback");
+  }
+
+  // フィードバックから次へ
+  function nextFromFeedback(){
     idx++;
-
     if(idx >= questions.length){
       // 履歴保存
       const list = loadHist();
@@ -382,12 +485,12 @@
       document.getElementById("resGenre").textContent = currentGenre;
       document.getElementById("ok").textContent = ok;
       document.getElementById("ng").textContent = ng;
+
       go("result");
       return;
     }
-
-    document.getElementById("progressPill").textContent = `${idx+1}/${questions.length}`;
-    document.getElementById("qText").textContent = questions[idx].text;
+    updateQuizUI();
+    go("quiz");
   }
 
   function restart(){
@@ -395,7 +498,7 @@
     startGenre(currentGenre);
   }
 
-  // 履歴描画
+  // 履歴
   function renderHist(){
     const el = document.getElementById("histList");
     el.innerHTML = "";
@@ -417,7 +520,7 @@
     renderHist();
   }
 
-  // 初期化
+  // 初期
   renderGenres();
 </script>
 </body>
